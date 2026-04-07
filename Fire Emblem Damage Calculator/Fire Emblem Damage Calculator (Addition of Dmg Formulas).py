@@ -1,7 +1,7 @@
 import random
 
 class Character:
-    def __init__(self, name, strength, magic, defense, resistance, hp, max_hp, skill, crit_rate, weapon_type, is_ranged=False, speed=10, is_dragon=False):
+    def __init__(self, name, strength, magic, defense, resistance, hp, max_hp, skill, crit_rate, weapon_type, element=None, is_ranged=False, speed=10, is_dragon=False):
         self.name = name
         self.strength = strength
         self.magic = magic
@@ -12,6 +12,7 @@ class Character:
         self.skill = skill  # Affects hit chance
         self.crit_rate = crit_rate  # Affects crit chance
         self.weapon_type = weapon_type  # Weapon type: "sword", "axe", "lance", "bow", or "magic"
+        self.element = element  # Elemental magic type (anima, dark, light)
         self.is_ranged = is_ranged  # Whether the character is using a ranged weapon (bow)
         self.speed = speed  # Speed affects follow-up attacks
         self.is_dragon = is_dragon  # Whether the character is transformed into a dragon
@@ -19,13 +20,12 @@ class Character:
 
     def attack(self, target, weapon_type, critical=False, terrain=None):
         """
-        Calculates damage dealt to the target considering terrain, follow-up attacks, and critical hits.
+        Calculates damage dealt to the target considering terrain, follow-up attacks, critical hits, and elemental magic.
         weapon_type: The weapon used by the attacker
         critical: Boolean to indicate if it's a critical hit
         terrain: The terrain the battle is taking place on (affects defense and avoidance)
-        Returns: (Damage, Hit result, Crit result, Counter-Attack result)
+        Returns: (Damage, Hit result, Crit result, Counter-Attack result, Target Dead)
         """
-
         # Apply terrain effects
         self.apply_terrain_effects(terrain)
 
@@ -50,6 +50,10 @@ class Character:
         elif weapon_type == "magical":
             attack = self.magic
             target_defense = target.resistance
+            if self.element:
+                damage = self.apply_elemental_affinity(target, attack)
+            else:
+                damage = attack - target_defense
         else:
             print("Invalid weapon type!")
             return (0, "Error", False, "No counter-attack", False)
@@ -57,7 +61,7 @@ class Character:
         damage = attack - target_defense
         if damage < 0:
             damage = 0
-        
+
         # Weapon triangle advantage (simplified here)
         damage = self.apply_weapon_triangle(target, damage)
 
@@ -85,6 +89,24 @@ class Character:
 
         return (damage + follow_up_damage, hit_result, crit_result, counter_attack_result, target_dead)
 
+    def apply_elemental_affinity(self, target, attack):
+        """Adjust damage based on elemental affinities."""
+        # Elemental strengths/weaknesses (corrected)
+        element_advantage = {
+            "anima": {"dark": 0.8, "light": 1.2},  # Anima is weak to Dark, strong against Light
+            "dark": {"light": 0.8, "anima": 1.2},  # Dark is weak to Light, strong against Anima
+            "light": {"anima": 0.8, "dark": 1.2},  # Light is weak to Anima, strong against Dark
+        }
+
+        # Apply elemental advantage/weakness
+        if self.element in element_advantage:
+            if target.element in element_advantage[self.element]:
+                damage_multiplier = element_advantage[self.element][target.element]
+                attack *= damage_multiplier
+                print(f"{self.name}'s {self.element.capitalize()} magic is {'strong' if damage_multiplier > 1 else 'weak'} against {target.name}'s {target.element.capitalize()} magic!")
+
+        return attack
+
     def apply_weapon_triangle(self, target, damage):
         """Applies the weapon triangle advantage or disadvantage."""
         weapon_advantage = {
@@ -105,8 +127,11 @@ class Character:
 
     def calculate_counter_attack(self, target):
         """Determines if the target can counter-attack."""
+        if self.is_ranged and target.is_ranged:
+            return "No counter-attack"  # Ranged units cannot counter-attack at range
+
         if target.is_ranged:
-            return "No counter-attack"  # Bows cannot counter-attack in close combat
+            return "No counter-attack"  # Ranged units cannot counter-attack in close combat
         
         # If the attacker is using a melee weapon and the target is within range
         if target.weapon_type in ["sword", "axe", "lance"]:
@@ -164,7 +189,10 @@ def get_character_stats(role):
     is_ranged = False
     if weapon_type == "bow":
         is_ranged = True
-    return Character(name, strength, magic, defense, resistance, hp, max_hp, skill, crit_rate, weapon_type, is_ranged)
+    element = None
+    if weapon_type == "magic":
+        element = input(f"What is {role}'s magic element? (anima, dark, light): ").lower()
+    return Character(name, strength, magic, defense, resistance, hp, max_hp, skill, crit_rate, weapon_type, element, is_ranged)
 
 def main():
     print("Welcome to the Fire Emblem Damage Calculator!")
