@@ -44,12 +44,14 @@ class Character:
             is_critical = True
             critical = True
 
-        # Calculate damage based on weapon type
-        if weapon_type == "physical":
+        # Calculate damage based on weapon type (now supporting "sword", "axe", "lance", etc.)
+        if weapon_type in ["sword", "axe", "lance", "bow"]:
+            # These are physical weapons
             attack = self.strength
             target_defense = target.defense
             damage = (attack + self.weapon_mt) - target_defense
-        elif weapon_type == "magical":
+        elif weapon_type == "magic":
+            # This is a magical weapon
             attack = self.magic
             target_defense = target.resistance
             if self.element:
@@ -57,7 +59,7 @@ class Character:
             else:
                 damage = attack - target_defense
         else:
-            print("Invalid weapon type!")
+            print(f"Error: Invalid weapon type '{weapon_type}'!")
             return (0, "Error", False, "No counter-attack", False)
 
         # If damage is less than 0, set it to 0 (no negative damage)
@@ -122,24 +124,23 @@ class Character:
         return damage
 
     def calculate_counter_attack(self, target):
-        """Determines if the target can counter-attack after being attacked."""
-        if target.is_ranged and not self.is_ranged:
-            return "No counter-attack"  # Ranged units cannot counter-attack if the attacker is close combat
-
+        """Determines if the target can counter-attack."""
         if self.is_ranged and target.is_ranged:
-            return "No counter-attack"  # Both are ranged, no counter-attack possible
+            return "No counter-attack"  # Ranged units cannot counter-attack at range
 
-        # If the target is not ranged and uses a melee weapon, they can counter-attack
+        if target.is_ranged:
+            return "No counter-attack"  # Ranged units cannot counter-attack in close combat
+        
+        # If the attacker is using a melee weapon and the target is within range
         if target.weapon_type in ["sword", "axe", "lance"]:
             return self.execute_counter_attack(target)
-        
         return "No counter-attack"
 
     def execute_counter_attack(self, target):
         """Performs the counter-attack and returns its result."""
         print(f"{target.name} counter-attacks!")
         # Perform counter-attack using the target's weapon
-        damage, hit_result, crit_result, _, target_dead = target.attack(self, target.weapon_type, critical=False)
+        damage, _, _, _, target_dead = target.attack(self, target.weapon_type, critical=False)
         if target_dead:
             print(f"{target.name} has been defeated!")
         return f"Counter-attack! {target.name} deals {damage} damage."
@@ -170,7 +171,6 @@ class Character:
             self.hp = self.max_hp
         print(f"{self.name} heals for {amount} HP! Current HP: {self.hp}")
 
-
 def get_character_stats(role):
     """Helper function to get stats for either player or enemy."""
     print(f"Enter stats for {role}:")
@@ -193,46 +193,51 @@ def get_character_stats(role):
         element = input(f"What is {role}'s magic element? (anima, dark, light): ").lower()
     return Character(name, strength, magic, defense, resistance, hp, max_hp, skill, crit_rate, weapon_type, weapon_mt, element, is_ranged)
 
-
 def main():
     print("Welcome to the Fire Emblem Damage Calculator!")
 
-    # Get stats for player and enemy
-    player = get_character_stats("Player")
-    enemy = get_character_stats("Enemy")
+    while True:
+        # Get stats for player and enemy
+        player = get_character_stats("Player")
+        enemy = get_character_stats("Enemy")
 
-    # Ask for the weapon type
-    weapon_type = input("Enter weapon type (physical or magical): ").lower()
+        # Ask for the weapon type
+        weapon_type = input("Enter weapon type (physical or magical): ").lower()
 
-    # Ask for the terrain type
-    terrain = input("Enter terrain type (forest, mountain, water, open ground): ").lower()
+        # Ask for the terrain type
+        terrain = input("Enter terrain type (forest, mountain, water, open ground): ").lower()
 
-    # Calculate damage with RNG for hit/miss/crit and counter-attack
-    damage, hit_result, crit_result, counter_attack_result, player_dead = player.attack(enemy, weapon_type, critical=False, terrain=terrain)
+        # Calculate damage with RNG for hit/miss/crit and counter-attack
+        damage, hit_result, crit_result, counter_attack_result, player_dead = player.attack(enemy, weapon_type, critical=False, terrain=terrain)
 
-    # Output the results
-    print(f"{player.name} attacks {enemy.name}!")
-    print(f"Result: {hit_result}")
-    if hit_result == "Hit":
-        print(f"Damage dealt: {damage}")
-        print(f"{crit_result}")
-    else:
-        print("No damage was dealt.")
+        # Output the results
+        print(f"{player.name} attacks {enemy.name}!")
+        print(f"Result: {hit_result}")
+        if hit_result == "Hit":
+            print(f"Damage dealt: {damage}")
+            print(f"{crit_result}")
+        else:
+            print("No damage was dealt.")
 
-    # Output counter-attack result
-    print(counter_attack_result)
+        # Output counter-attack result
+        print(counter_attack_result)
 
-    # Check if the player or enemy died
-    if player_dead:
-        print(f"{player.name} has been defeated!")
-        return
-    if enemy.hp <= 0:
-        print(f"{enemy.name} has been defeated!")
-        return
+        # Check if the player or enemy died
+        if player_dead:
+            print(f"{player.name} has been defeated!")
+            return
+        if enemy.hp <= 0:
+            print(f"{enemy.name} has been defeated!")
 
-    # If neither died, continue the battle
-    print(f"{player.name} and {enemy.name} are still standing...")
+        # Show current health status
+        print(f"\n{player.name}'s current HP: {player.hp}/{player.max_hp}")
+        print(f"{enemy.name}'s current HP: {enemy.hp}/{enemy.max_hp}\n")
 
+        # Ask if the player wants to run the code again
+        play_again = input("Do you want to run the battle again? (y/n): ").lower()
+        if play_again != 'y':
+            print("Thank you for playing!")
+            break
 
 if __name__ == "__main__":
     main()
