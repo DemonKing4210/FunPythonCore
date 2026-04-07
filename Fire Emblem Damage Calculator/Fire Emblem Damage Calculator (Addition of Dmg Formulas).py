@@ -33,21 +33,38 @@ class Character:
         
         return damage
 
-def main():
-    # Example characters
-    attacker = Character(name="Hero", strength=12, magic=5, defense=8, resistance=3, hp=40)
-    defender = Character(name="Enemy", strength=10, magic=4, defense=7, resistance=6, hp=35)
+def get_character_stats(role):
+    """Helper function to get stats for either player or enemy."""
+    print(f"Enter stats for {role}:")
+    name = input(f"Name of the {role}: ")
+    strength = int(input(f"Strength (for physical attacks) of {role}: "))
+    magic = int(input(f"Magic (for magical attacks) of {role}: "))
+    defense = int(input(f"Defense (for physical attacks) of {role}: "))
+    resistance = int(input(f"Resistance (for magical attacks) of {role}: "))
+    hp = int(input(f"HP of {role}: "))
+    return Character(name, strength, magic, defense, resistance, hp)
 
-    # Weapon type (physical or magical)
-    weapon_type = "physical"  # You can also try "magical"
+def main():
+    print("Welcome to the Fire Emblem Damage Calculator!")
+
+    # Get stats for player and enemy
+    player = get_character_stats("Player")
+    enemy = get_character_stats("Enemy")
+
+    # Ask for the weapon type
+    weapon_type = input("Enter weapon type (physical or magical): ").lower()
+
+    # Ask if it's a critical hit
+    critical_input = input("Is it a critical hit? (yes/no): ").lower()
+    critical = True if critical_input == "yes" else False
 
     # Calculate damage
-    damage = attacker.attack(defender, weapon_type, critical=False)
-    print(f"{attacker.name} attacks {defender.name} for {damage} damage!")
+    damage = player.attack(enemy, weapon_type, critical)
+    print(f"{player.name} attacks {enemy.name} for {damage} damage!")
 
-    # With critical hit
-    critical_damage = attacker.attack(defender, weapon_type, critical=True)
-    print(f"Critical hit! {attacker.name} attacks {defender.name} for {critical_damage} damage!")
+    # Optionally show critical hit result
+    if critical:
+        print(f"Critical hit! {player.name} dealt double damage.")
 
 if __name__ == "__main__":
     main()
