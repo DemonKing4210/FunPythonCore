@@ -1,7 +1,7 @@
 import random
 
 class Character:
-    def __init__(self, name, strength, magic, defense, resistance, hp, max_hp, skill, crit_rate, weapon_type, element=None, is_ranged=False, speed=10, is_dragon=False):
+    def __init__(self, name, strength, magic, defense, resistance, hp, max_hp, skill, crit_rate, weapon_type, weapon_mt, element=None, is_ranged=False, speed=10, is_dragon=False):
         self.name = name
         self.strength = strength
         self.magic = magic
@@ -12,6 +12,7 @@ class Character:
         self.skill = skill  # Affects hit chance
         self.crit_rate = crit_rate  # Affects crit chance
         self.weapon_type = weapon_type  # Weapon type: "sword", "axe", "lance", "bow", or "magic"
+        self.weapon_mt = weapon_mt  # Might (MT) of the weapon
         self.element = element  # Elemental magic type (anima, dark, light)
         self.is_ranged = is_ranged  # Whether the character is using a ranged weapon (bow)
         self.speed = speed  # Speed affects follow-up attacks
@@ -47,6 +48,7 @@ class Character:
         if weapon_type == "physical":
             attack = self.strength
             target_defense = target.defense
+            damage = (attack + self.weapon_mt) - target_defense
         elif weapon_type == "magical":
             attack = self.magic
             target_defense = target.resistance
@@ -58,7 +60,7 @@ class Character:
             print("Invalid weapon type!")
             return (0, "Error", False, "No counter-attack", False)
 
-        damage = attack - target_defense
+        # If damage is less than 0, set it to 0 (no negative damage)
         if damage < 0:
             damage = 0
 
@@ -186,13 +188,14 @@ def get_character_stats(role):
     skill = int(input(f"Skill (affects hit chance) of {role}: "))
     crit_rate = int(input(f"Critical rate (chance of crit) of {role}: "))
     weapon_type = input(f"What is {role}'s weapon type? (sword, axe, lance, bow, or magic): ").lower()
+    weapon_mt = int(input(f"What is the Might (MT) of {role}'s weapon? "))
     is_ranged = False
     if weapon_type == "bow":
         is_ranged = True
     element = None
     if weapon_type == "magic":
         element = input(f"What is {role}'s magic element? (anima, dark, light): ").lower()
-    return Character(name, strength, magic, defense, resistance, hp, max_hp, skill, crit_rate, weapon_type, element, is_ranged)
+    return Character(name, strength, magic, defense, resistance, hp, max_hp, skill, crit_rate, weapon_type, weapon_mt, element, is_ranged)
 
 def main():
     print("Welcome to the Fire Emblem Damage Calculator!")
