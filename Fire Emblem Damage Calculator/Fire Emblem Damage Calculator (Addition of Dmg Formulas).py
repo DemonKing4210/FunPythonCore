@@ -117,7 +117,7 @@ class Character:
 
     def execute_counter_attack(self, target):
         print(f"{target.name} counter-attacks!")
-        damage, _, _, _, target_dead = target.attack(self, target.weapon_type, critical=False)
+        damage, hit_result, crit_result, _, target_dead = target.attack(self, target.weapon_type, critical=False)
         if target_dead:
             print(f"{target.name} has been defeated!")
         return f"Counter-attack! {target.name} deals {damage} damage."
